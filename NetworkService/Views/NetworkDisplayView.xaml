@@ -1,0 +1,391 @@
+<UserControl x:Class="NetworkService.Views.NetworkDisplayView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:NetworkService.ViewModel"
+             xmlns:model="clr-namespace:NetworkService.Model"
+             xmlns:beh="clr-namespace:NetworkService.Behaviors"
+             Background="Transparent"
+             beh:KeyboardBehavior.CtrlECommand="{Binding ToggleTreeCommand}">
+
+    <UserControl.RenderTransform>
+        <TranslateTransform/>
+    </UserControl.RenderTransform>
+    <UserControl.Triggers>
+        <EventTrigger RoutedEvent="UserControl.Loaded">
+            <BeginStoryboard>
+                <Storyboard>
+                    <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                     From="0" To="1" Duration="0:0:0.22"/>
+                    <DoubleAnimation Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.Y)"
+                                     From="12" To="0" Duration="0:0:0.24">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </BeginStoryboard>
+        </EventTrigger>
+    </UserControl.Triggers>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="190"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="220"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="White" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <Grid Margin="12,16,12,12">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                    <TextBlock Text="ENTITETI" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource TextHintBrush}"/>
+                    <TextBlock Text="Ctrl+E — proširi / skupi" FontSize="9.5" Margin="0,2,0,0"
+                               Foreground="{StaticResource TextHintBrush}"
+                               ToolTip="Prečica za prikaz/sakrivanje sadržaja grupa u stablu"/>
+                </StackPanel>
+
+                <TreeView Grid.Row="1" x:Name="EntityTreeView" BorderThickness="0"
+                          Background="Transparent"
+                          AllowDrop="True"
+                          beh:DragDropBehavior.TreeEnabled="True"
+                          ItemsSource="{Binding TreeViewGroups}">
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="TreeViewItem"
+                               BasedOn="{StaticResource {x:Type TreeViewItem}}">
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}"/>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type vm:VentilTypeGroup}"
+                                                  ItemsSource="{Binding Items}">
+                            <TextBlock Text="{Binding TypeName}" FontSize="11" FontWeight="Bold"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Padding="2,4"/>
+                            <HierarchicalDataTemplate.ItemTemplate>
+                                <DataTemplate DataType="{x:Type model:Ventil}">
+                                    <StackPanel Orientation="Horizontal" Margin="0,2">
+                                        <Ellipse Width="6" Height="6" Margin="0,0,6,0"
+                                                 VerticalAlignment="Center">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Fill" Value="{StaticResource PrimaryBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOutOfRange}" Value="True">
+                                                            <Setter Property="Fill" Value="{StaticResource WarningBrush}"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <TextBlock Text="{Binding Name}" FontSize="12"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                                   ToolTip="Prevuci na mrezu ili Shift+klik za vezu"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </HierarchicalDataTemplate.ItemTemplate>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+
+                <Border Grid.Row="2" Height="4" Margin="0,8,0,4"/>
+
+                <StackPanel Grid.Row="3" Orientation="Vertical">
+                    <Button Content="Ukloni sa mreže" Margin="0,0,0,6"
+                            Command="{Binding RemoveFromGridCommand}"
+                            Style="{StaticResource DangerButtonStyle}"
+                            ToolTip="Klikni na ćeliju u mreži da je selektuješ, zatim klikni ovo dugme da vratiš entitet u listu"/>
+                    <Button Content="Rasporedi sve"
+                            Command="{Binding AutoArrangeCommand}"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            ToolTip="Automatski rasporedi sve entitete iz liste na slobodna polja mreže"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1" Margin="20,16,20,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="DRAG &amp; DROP MREŽA"
+                           FontSize="10" FontWeight="Bold"
+                           Foreground="{StaticResource TextHintBrush}"
+                           VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Border CornerRadius="3" Padding="8,3" Background="#EBF4FF"
+                            Margin="0,0,8,0">
+                        <TextBlock FontSize="10" Foreground="{StaticResource PrimaryBrush}">
+                            <Run Text="Veze: "/>
+                            <Run Text="{Binding Connections.Count, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+                    <Border CornerRadius="3" Padding="8,3">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#EBF4FF"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsConnecting}" Value="True">
+                                        <Setter Property="Background" Value="#BEE3F8"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock FontSize="10" Foreground="{StaticResource PrimaryBrush}">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="Shift+klik = veži / odveži"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsConnecting}" Value="True">
+                                            <Setter Property="Text" Value="{Binding ConnectHint}"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+            </Grid>
+
+            <Border Grid.Row="1" BorderBrush="{StaticResource PrimaryBrush}"
+                    BorderThickness="2" CornerRadius="6">
+                <Grid x:Name="GridContainer">
+                    <ItemsControl x:Name="GridItemsControl" ItemsSource="{Binding NetworkItems}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="3" Columns="4"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="4" BorderThickness="1.5" CornerRadius="6"
+                                        MinHeight="110" Cursor="Hand"
+                                        AllowDrop="True"
+                                        beh:DragDropBehavior.CellEnabled="True"
+                                        beh:DragDropBehavior.ViewModel="{Binding DataContext,
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                            <Setter Property="Background" Value="White"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                                    <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Ventil.IsOutOfRange}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}"/>
+                                                    <Setter Property="Background" Value="{StaticResource WarningLightBrush}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryLightBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="2.5"/>
+                                                    <Setter Property="Background" Value="#EBF4FF"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsConnectSource}" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                    <Setter Property="BorderThickness" Value="3"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+
+                                    <Grid>
+                                        <StackPanel HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center">
+                                            <StackPanel.Style>
+                                                <Style TargetType="StackPanel">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </StackPanel.Style>
+                                            <TextBlock Text="+" FontSize="22" FontWeight="Light"
+                                                       Foreground="{StaticResource TextHintBrush}"
+                                                       HorizontalAlignment="Center" Opacity="0.5"/>
+                                            <TextBlock Text="prevuci ovdje" FontSize="10"
+                                                       Foreground="{StaticResource TextHintBrush}"
+                                                       HorizontalAlignment="Center" Opacity="0.5"
+                                                       Margin="0,2,0,0"/>
+                                        </StackPanel>
+
+                                        <Grid>
+                                            <Grid.Style>
+                                                <Style TargetType="Grid">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Grid.Style>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="*"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <StackPanel Grid.Row="0" Margin="8,8,8,4"
+                                                        VerticalAlignment="Center">
+                                                <Image Width="32" Height="32" Margin="0,0,0,5"
+                                                       HorizontalAlignment="Center">
+                                                    <Image.Style>
+                                                        <Style TargetType="Image">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Ventil.Type.Name}"
+                                                                             Value="Kablovski senzor">
+                                                                    <Setter Property="Source" Value="/Images/kablovski.png"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Ventil.Type.Name}"
+                                                                             Value="Digitalni manometar">
+                                                                    <Setter Property="Source" Value="/Images/digitalni.png"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
+
+                                                <TextBlock Text="{Binding Ventil.Name}"
+                                                           FontSize="11" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                                           HorizontalAlignment="Center"
+                                                           TextWrapping="Wrap" TextAlignment="Center"/>
+
+                                                <TextBlock Text="{Binding Ventil.Id, StringFormat='#\{0\}'}"
+                                                           FontSize="10" FontFamily="Consolas"
+                                                           Foreground="{StaticResource TextHintBrush}"
+                                                           HorizontalAlignment="Center" Margin="0,2,0,0"/>
+
+                                                <TextBlock Text="{Binding Ventil.MeasurementDisplay}"
+                                                           FontSize="14" FontWeight="Bold"
+                                                           FontFamily="Consolas"
+                                                           HorizontalAlignment="Center" Margin="0,4,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Ventil.IsOutOfRange}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+
+                                            <Border Grid.Row="1" CornerRadius="0,0,5,5" Padding="6,3">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{StaticResource SuccessLightBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Ventil.IsOutOfRange}" Value="True">
+                                                                <Setter Property="Background" Value="{StaticResource WarningLightBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding Ventil.HasMeasurement}" Value="False">
+                                                                <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding Ventil.Status}"
+                                                           FontSize="9" FontWeight="Bold"
+                                                           HorizontalAlignment="Center">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Ventil.IsOutOfRange}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding Ventil.HasMeasurement}" Value="False">
+                                                                    <Setter Property="Foreground" Value="{StaticResource TextHintBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <Canvas x:Name="ConnectionCanvas" IsHitTestVisible="False"
+                            beh:ConnectionsBehavior.Connections="{Binding Connections}"
+                            beh:ConnectionsBehavior.Items="{Binding NetworkItems}"
+                            beh:ConnectionsBehavior.ItemsHost="{Binding ElementName=GridItemsControl}"/>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <Border Grid.Column="2" Background="White" BorderBrush="{StaticResource BorderBrush}"
+                BorderThickness="1,0,0,0" Padding="14,16,14,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                    <TextBlock Text="HISTORY" FontSize="10" FontWeight="Bold"
+                               Foreground="{StaticResource TextHintBrush}"/>
+                    <TextBlock FontSize="10" Foreground="{StaticResource TextHintBrush}" Margin="0,3,0,0">
+                        <Run Text="Ctrl+Z"/>
+                        <Run Text=" · "/>
+                        <Run Text="Ctrl+Shift+Z sve"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding Source={x:Static vm:MainWindowViewModel.History}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{StaticResource BorderBrush}"
+                                        BorderThickness="0,0,0,1" Padding="0,7">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="8"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border Grid.Column="0" Width="3" CornerRadius="2"
+                                                Background="{StaticResource PrimaryLightBrush}"
+                                                VerticalAlignment="Stretch" Margin="0,2,0,2"/>
+                                        <TextBlock Grid.Column="1" Margin="8,0,0,0"
+                                                   Text="{Binding}" FontSize="11"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <TextBlock Grid.Row="1" Text="Još nema akcija."
+                           FontSize="11" Foreground="{StaticResource TextHintBrush}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Visibility="{Binding Source={x:Static vm:MainWindowViewModel.History},
+                               Path=Count,
+                               Converter={StaticResource ZeroCountToVisibilityConverter}}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
